@@ -1,4 +1,4 @@
-import { generateSeed, IBaseKernelModule,PGCon } from '@grandlinex/kernel';
+import { generateSeed, IBaseKernelModule, PGCon } from '@grandlinex/kernel';
 import {
   GroupPermissionRow,
   PermissionRow,

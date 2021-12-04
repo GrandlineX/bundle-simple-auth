@@ -68,7 +68,9 @@ export default class AuthProvider extends BaseAuthProvider {
     const db = this.module.getDb() as AuthDb;
     const perm = await db.getUserPermissionsByName(username);
 
-    return perm.find(({ permission_name }) => permission_name === permission) !==
-        undefined;
+    return (
+      perm.find(({ permission_name }) => permission_name === permission) !==
+      undefined
+    );
   }
 }

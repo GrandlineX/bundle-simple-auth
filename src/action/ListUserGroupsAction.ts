@@ -7,7 +7,6 @@ import e from 'express';
 import { JwtToken } from '@grandlinex/kernel/dist/classes/BaseAuthProvider';
 import { AuthDb } from '../database';
 
-
 /**
  * @name ListUserGroupsAction
  *
