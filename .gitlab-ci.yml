@@ -170,7 +170,7 @@ test:test:dev:
   only:
     - merge_requests
     - dev
-    - master
+    - main
   script:
     - npm install
     - npm run test-converage
@@ -197,16 +197,16 @@ test:test:dev:
   needs:
     - test:test:dev
 
-'sonar:scan:master':
+'sonar:scan:main':
   allow_failure: true
   image: ${DOCKER_IMG_PRE}sonarsource/sonar-scanner-cli
   stage: scan
   tags:
     - docker
   only:
-    - master
+    - main
   script:
-    - sonar-scanner -Dsonar.login=$sonar_key -Dsonar.host.url=$sonar_url -Dsonar.branch.name=master
+    - sonar-scanner -Dsonar.login=$sonar_key -Dsonar.host.url=$sonar_url -Dsonar.branch.name=main
   needs:
     - test:test:dev
 
@@ -220,7 +220,7 @@ lint:scan:dev:
   only:
     - merge_requests
     - dev
-    - master
+    - main
   script:
     - npm install
     - npm run lint
@@ -236,7 +236,7 @@ sec:scan:dev:
   only:
     - merge_requests
     - dev
-    - master
+    - main
   script:
     - /analyzer run
   artifacts:
@@ -252,7 +252,7 @@ make:build:dev:
   only:
     - merge_requests
     - dev
-    - master
+    - main
   script:
     - npm install
     - npm run buildprep
