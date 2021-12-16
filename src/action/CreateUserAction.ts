@@ -75,7 +75,7 @@ export default class CreateUserAction extends BaseApiAction {
         const uid = await AUW?.createObject({
           created: new Date(),
           disabled: false,
-          e_id: null,
+
           password: hash,
           seed,
           user_name: req.body.username,
@@ -83,8 +83,7 @@ export default class CreateUserAction extends BaseApiAction {
         if (uid) {
           const user = await UMW?.createObject(
             new UserMap({
-              e_id: null,
-              user_id: uid.e_id as number,
+              user_id: uid.e_id,
               group_id: 2,
             })
           );

@@ -39,13 +39,11 @@ export default class AuthDb extends PGCon {
     // ADD GROUPS
     await GW?.createObject(
       new Groups({
-        e_id: null,
         group_name: 'admin',
       })
     );
     await GW?.createObject(
       new Groups({
-        e_id: null,
         group_name: 'user',
       })
     );
@@ -53,13 +51,11 @@ export default class AuthDb extends PGCon {
     // ADD PERMISSION
     await PMW?.createObject(
       new Permission({
-        e_id: null,
         permission_name: 'admin',
       })
     );
     await PMW?.createObject(
       new Permission({
-        e_id: null,
         permission_name: 'api',
       })
     );
@@ -67,21 +63,18 @@ export default class AuthDb extends PGCon {
     // MAP GROUPS
     await GMW?.createObject(
       new GroupMap({
-        e_id: null,
         group_id: 1,
         permission: 1,
       })
     );
     await GMW?.createObject(
       new GroupMap({
-        e_id: null,
         group_id: 1,
         permission: 2,
       })
     );
     await GMW?.createObject(
       new GroupMap({
-        e_id: null,
         group_id: 2,
         permission: 2,
       })
@@ -92,7 +85,7 @@ export default class AuthDb extends PGCon {
       new AuthUser({
         created: new Date(),
         disabled: false,
-        e_id: null,
+
         user_name: 'admin',
         password: hash,
         seed,
@@ -102,7 +95,6 @@ export default class AuthDb extends PGCon {
     // Admin permission
     await UMW?.createObject(
       new UserMap({
-        e_id: null,
         user_id: 1,
         group_id: 1,
       })

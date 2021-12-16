@@ -29,7 +29,6 @@ export default class AuthUser extends CoreEntity {
 
   constructor(prop?: EProperties<AuthUser>) {
     super();
-    this.e_id = prop?.e_id || null;
     this.user_name = prop?.user_name || '';
     this.password = prop?.password || '';
     this.seed = prop?.seed || '';
