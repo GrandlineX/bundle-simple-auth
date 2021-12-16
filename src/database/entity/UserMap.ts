@@ -8,7 +8,7 @@ export default class UserMap extends CoreEntity {
     dataType: 'int',
     foreignKey: {
       key: 'e_id',
-      relation: 'groups',
+      relation: 'auth_user',
     },
   })
   user_id: number;
@@ -17,7 +17,7 @@ export default class UserMap extends CoreEntity {
     dataType: 'int',
     foreignKey: {
       key: 'e_id',
-      relation: 'permission',
+      relation: 'groups',
     },
   })
   group_id: number;

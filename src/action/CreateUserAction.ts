@@ -69,32 +69,23 @@ export default class CreateUserAction extends BaseApiAction {
         const mdb = this.getModule().getDb() as AuthDb;
         const seed = generateSeed();
         const hash = cc.getHash(seed, req.body.password);
-        const AUW = mdb.getEntityWrapper<AuthUser>('AuthUser');
-        const UMW = mdb.getEntityWrapper<UserMap>('UserMap');
 
-        const uid = await AUW?.createObject({
+        const uid = await mdb.authUser.createObject({
           created: new Date(),
           disabled: false,
-
           password: hash,
           seed,
           user_name: req.body.username,
         });
-        if (uid) {
-          const user = await UMW?.createObject(
-            new UserMap({
-              user_id: uid.e_id,
-              group_id: 2,
-            })
-          );
-          if (user) {
-            res.status(200).send('user creaded');
-          } else {
-            res.sendStatus(500);
-          }
-        } else {
-          res.status(504).send('interal error 1');
-        }
+
+        await mdb.userMap.createObject(
+          new UserMap({
+            user_id: uid.e_id,
+            group_id: 2,
+          })
+        );
+
+        res.status(200).send('user creaded');
         return;
       }
     }

@@ -1,4 +1,9 @@
-import { generateSeed, IBaseKernelModule, PGCon } from '@grandlinex/kernel';
+import {
+  CoreEntityWrapper,
+  generateSeed,
+  IBaseKernelModule,
+  PGCon,
+} from '@grandlinex/kernel';
 import {
   GroupPermissionRow,
   PermissionRow,
@@ -11,17 +16,23 @@ import Permission from './entity/Permission';
 import UserMap from './entity/UserMap';
 
 export default class AuthDb extends PGCon {
+  groups: CoreEntityWrapper<Groups>;
+
+  permission: CoreEntityWrapper<Permission>;
+
+  groupMap: CoreEntityWrapper<GroupMap>;
+
+  authUser: CoreEntityWrapper<AuthUser>;
+
+  userMap: CoreEntityWrapper<UserMap>;
+
   constructor(module: IBaseKernelModule<any, any, any, any>) {
     super(module, '0');
-    [
-      new AuthUser(),
-      new Groups(),
-      new Permission(),
-      new GroupMap(),
-      new UserMap(),
-    ].forEach((entity) => {
-      this.registerEntity(entity);
-    });
+    this.groups = this.registerEntity(new Groups());
+    this.permission = this.registerEntity(new Permission());
+    this.groupMap = this.registerEntity(new GroupMap());
+    this.authUser = this.registerEntity(new AuthUser());
+    this.userMap = this.registerEntity(new UserMap());
   }
 
   async initNewDB(): Promise<void> {
@@ -30,50 +41,45 @@ export default class AuthDb extends PGCon {
       .getConfigStore()
       .get('SERVER_PASSWORD') as string;
     const hash = this.getKernel().getCryptoClient()?.getHash(seed, pw);
-    const GW = this.getEntityWrapper<Groups>('Groups');
-    const PMW = this.getEntityWrapper<Permission>('Permission');
-    const GMW = this.getEntityWrapper<GroupMap>('GroupMap');
-    const AUW = this.getEntityWrapper<AuthUser>('AuthUser');
-    const UMW = this.getEntityWrapper<UserMap>('UserMap');
 
     // ADD GROUPS
-    await GW?.createObject(
+    await this.groups.createObject(
       new Groups({
         group_name: 'admin',
       })
     );
-    await GW?.createObject(
+    await this.groups.createObject(
       new Groups({
         group_name: 'user',
       })
     );
 
     // ADD PERMISSION
-    await PMW?.createObject(
+    await this.permission.createObject(
       new Permission({
         permission_name: 'admin',
       })
     );
-    await PMW?.createObject(
+    await this.permission.createObject(
       new Permission({
         permission_name: 'api',
       })
     );
 
     // MAP GROUPS
-    await GMW?.createObject(
+    await this.groupMap.createObject(
       new GroupMap({
         group_id: 1,
         permission: 1,
       })
     );
-    await GMW?.createObject(
+    await this.groupMap.createObject(
       new GroupMap({
         group_id: 1,
         permission: 2,
       })
     );
-    await GMW?.createObject(
+    await this.groupMap.createObject(
       new GroupMap({
         group_id: 2,
         permission: 2,
@@ -81,7 +87,7 @@ export default class AuthDb extends PGCon {
     );
 
     // Admin user
-    await AUW?.createObject(
+    await this.authUser.createObject(
       new AuthUser({
         created: new Date(),
         disabled: false,
@@ -93,7 +99,7 @@ export default class AuthDb extends PGCon {
     );
 
     // Admin permission
-    await UMW?.createObject(
+    await this.userMap.createObject(
       new UserMap({
         user_id: 1,
         group_id: 1,
