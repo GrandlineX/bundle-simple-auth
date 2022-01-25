@@ -1,4 +1,5 @@
 import { Column, CoreEntity, Entity, EProperties } from '@grandlinex/kernel';
+
 /**
  * GroupMap entity to assign a permission to a group
  */

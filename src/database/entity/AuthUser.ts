@@ -11,10 +11,14 @@ export default class AuthUser extends CoreEntity {
   })
   user_name: string;
 
-  @Column()
+  @Column({
+    dataType: 'string',
+  })
   password: string;
 
-  @Column()
+  @Column({
+    dataType: 'string',
+  })
   seed: string;
 
   @Column({

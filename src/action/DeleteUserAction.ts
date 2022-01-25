@@ -1,21 +1,19 @@
 import {
   BaseApiAction,
   CryptoClient,
-  generateSeed,
   IBaseKernelModule,
 } from '@grandlinex/kernel';
 import e from 'express';
 import { JwtToken } from '@grandlinex/kernel/dist/classes/BaseAuthProvider';
 import { AuthDb } from '../database';
-import UserMap from '../database/entity/UserMap';
 
 /**
  * @name CreateUserAction
  *
  * @openapi
- * /user/add:
+ * /user/delete:
  *   post:
- *     summary: Create new user
+ *     summary: Delete user
  *     tags:
  *       - simple-auth
  *     responses:
@@ -42,12 +40,10 @@ import UserMap from '../database/entity/UserMap';
  *             properties:
  *               username:
  *                 type: string
- *               password:
- *                 type: string
  */
-export default class CreateUserAction extends BaseApiAction {
+export default class DeleteUserAction extends BaseApiAction {
   constructor(module: IBaseKernelModule<any, any, any, any>) {
-    super('POST', '/user/add', module, module.getKernel().getModule());
+    super('POST', '/user/delete', module, module.getKernel().getModule());
     this.handler = this.handler.bind(this);
   }
 
@@ -58,33 +54,35 @@ export default class CreateUserAction extends BaseApiAction {
     data: JwtToken | null
   ): Promise<void> {
     const cc = this.getKernel().getCryptoClient() as CryptoClient;
-
-    if (!req.body.username || !req.body.password) {
+    const userName = req.body.username;
+    if (!userName) {
       res.status(400).send('error: send username and password');
       return;
     }
     if (data) {
       const allowed = await cc.permissonValidation(data, 'admin');
-      if (allowed) {
+      if (allowed && userName !== 'admin') {
         const mdb = this.getModule().getDb() as AuthDb;
-        const seed = generateSeed();
-        const hash = cc.getHash(seed, req.body.password);
 
-        const uid = await mdb.authUser.createObject({
-          created: new Date(),
-          disabled: false,
-          password: hash,
-          seed,
-          user_name: req.body.username,
+        const authUser = await mdb.authUser.findObj({
+          user_name: userName,
+        });
+        if (!authUser) {
+          res.sendStatus(500);
+          return;
+        }
+
+        const groupAccess = await mdb.userMap.getObjList({
+          user_id: authUser.e_id,
         });
 
-        const map = new UserMap({
-          user_id: uid.e_id,
-          group_id: 2,
-        });
-        await mdb.userMap.createObject(map);
+        for (const acc of groupAccess) {
+          await mdb.userMap.delete(acc.e_id);
+        }
 
-        res.status(200).send('user created');
+        await mdb.authUser.delete(authUser.e_id);
+
+        res.status(200).send('user deleted');
         return;
       }
     }

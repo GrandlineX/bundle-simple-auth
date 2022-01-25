@@ -5,7 +5,9 @@ import { Column, CoreEntity, Entity, EProperties } from '@grandlinex/kernel';
  */
 @Entity('Groups')
 export default class Groups extends CoreEntity {
-  @Column()
+  @Column({
+    dataType: 'string',
+  })
   group_name: string;
 
   constructor(prop?: EProperties<Groups>) {

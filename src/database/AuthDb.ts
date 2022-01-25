@@ -43,55 +43,36 @@ export default class AuthDb extends PGCon {
     const hash = this.getKernel().getCryptoClient()?.getHash(seed, pw);
 
     // ADD GROUPS
-    await this.groups.createObject(
-      new Groups({
-        group_name: 'admin',
-      })
-    );
-    await this.groups.createObject(
-      new Groups({
-        group_name: 'user',
-      })
-    );
+    for (const item of [
+      new Groups({ group_name: 'admin' }),
+      new Groups({ group_name: 'user' }),
+    ]) {
+      await this.groups.createObject(item);
+    }
 
     // ADD PERMISSION
-    await this.permission.createObject(
-      new Permission({
-        permission_name: 'admin',
-      })
-    );
-    await this.permission.createObject(
-      new Permission({
-        permission_name: 'api',
-      })
-    );
+    for (const item of [
+      new Permission({ permission_name: 'admin' }),
+      new Permission({ permission_name: 'api' }),
+    ]) {
+      await this.permission.createObject(item);
+    }
 
     // MAP GROUPS
-    await this.groupMap.createObject(
-      new GroupMap({
-        group_id: 1,
-        permission: 1,
-      })
-    );
-    await this.groupMap.createObject(
-      new GroupMap({
-        group_id: 1,
-        permission: 2,
-      })
-    );
-    await this.groupMap.createObject(
-      new GroupMap({
-        group_id: 2,
-        permission: 2,
-      })
-    );
+
+    for (const item of [
+      new GroupMap({ group_id: 1, permission: 1 }),
+      new GroupMap({ group_id: 1, permission: 2 }),
+      new GroupMap({ group_id: 2, permission: 2 }),
+    ]) {
+      await this.groupMap.createObject(item);
+    }
 
     // Admin user
     await this.authUser.createObject(
       new AuthUser({
         created: new Date(),
         disabled: false,
-
         user_name: 'admin',
         password: hash,
         seed,
@@ -99,12 +80,7 @@ export default class AuthDb extends PGCon {
     );
 
     // Admin permission
-    await this.userMap.createObject(
-      new UserMap({
-        user_id: 1,
-        group_id: 1,
-      })
-    );
+    await this.userMap.createObject(new UserMap({ user_id: 1, group_id: 1 }));
 
     await this.execScripts([
       {
@@ -186,7 +162,9 @@ export default class AuthDb extends PGCon {
   async getUserGroups(name: string): Promise<UserGroupRow[]> {
     try {
       const query = await this.db?.query(
-        `SELECT * from ${this.schemaName}.user_groups WHERE user_name=$1`,
+        `SELECT *
+                 from ${this.schemaName}.user_groups
+                 WHERE user_name = $1`,
         [name]
       );
       return query?.rows || [];

@@ -1,6 +1,5 @@
 import * as Path from 'path';
- import Kernel, {  createFolderIfNotExist, sleep} from '@grandlinex/kernel';
-import { randomUUID } from 'crypto';
+import Kernel, {createFolderIfNotExist, ICClient, sleep} from '@grandlinex/kernel';
 import AuthModule from '../src/AuthModule';
 import { AuthDb } from '../src';
 import axios from "axios";
@@ -22,11 +21,14 @@ const store=kernel.getConfigStore();
 kernel.setTriggerFunction('pre', async (ik) => {
   ik.addModule(new AuthModule(ik));
 });
-let bearer = '';
+let adminBearer = '';
 
-describe('New Kernel Startup', () => {
-  jest.setTimeout(30000);
+const user={
+  username: "test-user",
+  password: 'test-pw',
+}
 
+describe('Kernel Startup', () => {
   test('start kernel', async () => {
     expect(kernel.getState()).toBe('init');
     const result = await kernel.start();
@@ -34,6 +36,12 @@ describe('New Kernel Startup', () => {
     expect(kernel.getState()).toBe('running');
     expect(kernel.getModCount()).toBe(1);
   });
+});
+
+
+
+describe('Prepare env', () => {
+
   test('db', async () => {
     const db = (await kernel.getChildModule('auth')?.getDb()) as AuthDb;
     const USW=db.getEntityWrapper<AuthUser>("AuthUser");
@@ -45,6 +53,20 @@ describe('New Kernel Startup', () => {
     expect(user?.user_name).toBe('admin');
   });
 
+
+  test('group permission', async () => {
+    const mod = kernel.getChildModule('auth') as AuthModule;
+    expect(mod).not.toBeNull();
+    const db = mod?.getDb();
+    expect(db).not.toBeNull();
+    const perm = await db?.getGroupPermissions(1);
+    expect(perm).toHaveLength(2);
+    expect(await db?.getUserPermissionsById(1)).not.toBeNull();
+    expect(await db?.getUserPermissionsById(1)).toHaveLength(2);
+    expect(await db?.getUserPermissionsByName('admin')).not.toBeNull();
+    expect(await db?.getUserPermissionsByName('admin')).toHaveLength(2);
+  });
+
   test('token api', async () => {
     const cc = kernel.getCryptoClient();
     expect(cc).not.toBeNull();
@@ -52,8 +74,6 @@ describe('New Kernel Startup', () => {
       username: 'admin',
       token: store.get("SERVER_PASSWORD"),
     };
-
-
     const token = await axios.post(
         `http://localhost:${apiPort}/token`,
         body
@@ -61,26 +81,23 @@ describe('New Kernel Startup', () => {
 
 
     expect(token.status).toBe(200);
-     const json = token.data;
+    const json = token.data;
     expect(json.token).not.toBeNull();
     expect(json.token).not.toBeUndefined();
-    bearer = json.token;
-    const res = await cc?.jwtVerifyAccessToken(bearer);
+    adminBearer = json.token;
+    const res = await cc?.jwtVerifyAccessToken(adminBearer);
     expect(res?.username).toBe('admin');
   });
 
-  test('test auth + user add ', async () => {
-    const user={
-      username: randomUUID(),
-      password: 'testpw',
-    }
 
+
+  test('test auth + user add ', async () => {
     const testcall = await axios.post(
         `http://localhost:${apiPort}/user/add`,
         user,
         {
           headers:{
-            Authorization: `Bearer ${bearer}`
+            Authorization: `Bearer ${adminBearer}`
           }
         }
     );
@@ -98,7 +115,7 @@ describe('New Kernel Startup', () => {
     if (!userList || USW){
       return
     }
-    expect(userList.length).toBeGreaterThan(1);
+    expect(userList.length).toBe(2);
 
     const lastUser=userList[userList.length-1];
 
@@ -106,31 +123,93 @@ describe('New Kernel Startup', () => {
 
   });
 
+});
+
+
+
+
+describe.each([
+  ['admin', store.get("SERVER_PASSWORD") as string,"admin",true],
+  [user.username, user.password,"api",true],
+  ['noAuth', "noPw","api",false],
+])('CheckAccess :(%s):', (curUser: string, pw: string,access:string,valid:boolean) => {
+  let bearer: string="";
+
+
+
+  test('token api', async () => {
+    const cc = kernel.getCryptoClient() as ICClient;
+    expect(cc).not.toBeNull();
+    const body = {
+      username: curUser,
+      token: pw,
+    };
+
+    const token = await axios.post(
+        `http://localhost:${apiPort}/token`,
+        body,
+    {
+      validateStatus:()=>true
+    }
+    );
+
+
+    expect(token.status).toBe(valid?200:403);
+    if (valid){
+      const json = token.data;
+      expect(json.token).not.toBeNull();
+      expect(json.token).not.toBeUndefined();
+      bearer = json.token;
+      const res = await cc.jwtVerifyAccessToken(bearer);
+      expect(res).not.toBeUndefined()
+      expect(res).not.toBeNull()
+      if (!res){
+        return
+      }
+      const validation = await cc.permissonValidation(res,access)
+
+      expect(validation).toBe(valid)
+    }
+  });
+
+
   test('user list ', async () => {
 
-    const testcall = await axios.get(
+    const testcall = await axios.get<any[]>(
         `http://localhost:${apiPort}/user/list`,
         {
           headers:{
             Authorization: `Bearer ${bearer}`
-          }
+          },
+          validateStatus:()=>true
         }
     );
 
-    expect(testcall.status).toBe(200);
+    switch (access){
+      case "admin":
+        expect(testcall.status).toBe(valid?200:403);
+        if (valid){
+          expect(testcall.data).toHaveLength(2)
+        }
+        break;
+      case  "api":
+        expect(testcall.status).toBe(valid?403:401);
+        break;
+    }
 
-    const json:any[]=testcall.data;
-    expect(json.length).toBeGreaterThan(1)
   });
 
 
   test('auth via query', async () => {
 
     const testcall = await axios.get(
-        `http://localhost:${apiPort}/test/auth?glxauth=${bearer}`
+        `http://localhost:${apiPort}/test/auth?glxauth=${bearer}`,{
+    validateStatus:()=>true
+    }
     );
 
-    expect(testcall.status).toBe(200);
+
+    expect(testcall.status).toBe(valid?200:401);
 
   });
 
@@ -142,43 +221,60 @@ describe('New Kernel Startup', () => {
         {
           headers:{
             Cookie: `glxauth=${bearer};`
-          }
+          },validateStatus:()=>true
+
         }
     );
 
-    expect(testcall.status).toBe(200);
+
+    expect(testcall.status).toBe(valid?200:401);
 
   });
 
   test('user groups ', async () => {
 
-    const testcall = await axios.get(
+    const testcall = await axios.get<any[]>(
         `http://localhost:${apiPort}/user/groups`,
         {
           headers:{
             Authorization: `Bearer ${bearer}`
           }
+          ,validateStatus:()=>true
+        }
+
+  );
+
+    expect(testcall.status).toBe(valid?200:401);
+    if (valid){
+      expect(testcall.data.length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+});
+
+
+
+describe('Cleanup env', () => {
+
+  test('delete user', async () => {
+
+    const testcall = await axios.post(
+        `http://localhost:${apiPort}/user/delete`,
+        user,
+        {
+          headers:{
+            Authorization: `Bearer ${adminBearer}`
+          }
         }
     );
-
     expect(testcall.status).toBe(200);
-
-    expect(testcall.data.length).toBe(1);
   });
 
+});
 
-  test('group permission', async () => {
-    const mod = kernel.getChildModule('auth') as AuthModule;
-    expect(mod).not.toBeNull();
-    const db = mod?.getDb();
-    expect(db).not.toBeNull();
-    const perm = await db?.getGroupPermissions(1);
-    expect(perm).toHaveLength(2);
-    expect(await db?.getUserPermissionsById(1)).not.toBeNull();
-    expect(await db?.getUserPermissionsById(1)).toHaveLength(2);
-    expect(await db?.getUserPermissionsByName('admin')).not.toBeNull();
-    expect(await db?.getUserPermissionsByName('admin')).toHaveLength(2);
-  });
+
+
+describe('Kernel stop', () => {
 
   test('exit kernel', async () => {
     const result = await kernel.stop();
@@ -186,4 +282,5 @@ describe('New Kernel Startup', () => {
     expect(kernel.getState()).toBe('exited');
     expect(result).toBeTruthy();
   });
+
 });
