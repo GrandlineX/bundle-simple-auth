@@ -8,6 +8,7 @@ import e from 'express';
 import { JwtToken } from '@grandlinex/kernel/dist/classes/BaseAuthProvider';
 import { AuthDb } from '../database';
 import UserMap from '../database/entity/UserMap';
+import AuthUser from '../database/entity/AuthUser';
 
 /**
  * @name CreateUserAction
@@ -69,18 +70,24 @@ export default class CreateUserAction extends BaseApiAction {
         const mdb = this.getModule().getDb() as AuthDb;
         const seed = generateSeed();
         const hash = cc.getHash(seed, req.body.password);
-
-        const uid = await mdb.authUser.createObject({
-          created: new Date(),
-          disabled: false,
-          password: hash,
-          seed,
-          user_name: req.body.username,
-        });
+        const group = await mdb.groups.findObj({ group_name: 'user' });
+        if (!group) {
+          res.sendStatus(500);
+          return;
+        }
+        const uid = await mdb.authUser.createObject(
+          new AuthUser({
+            created: new Date(),
+            disabled: false,
+            password: hash,
+            seed,
+            user_name: req.body.username,
+          })
+        );
 
         const map = new UserMap({
           user_id: uid.e_id,
-          group_id: 2,
+          group_id: group.e_id,
         });
         await mdb.userMap.createObject(map);
 

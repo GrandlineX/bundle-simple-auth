@@ -1,5 +1,5 @@
 import * as Path from 'path';
-import Kernel, {createFolderIfNotExist, ICClient, sleep} from '@grandlinex/kernel';
+import Kernel, {createFolderIfNotExist, ICClient, sleep, SQLCon} from '@grandlinex/kernel';
 import AuthModule from '../src/AuthModule';
 import { AuthDb } from '../src';
 import axios from "axios";
@@ -19,7 +19,7 @@ const kernel = new Kernel( {appName, appCode,pathOverride: testPath,envFilePath:
 kernel.setAppServerPort( apiPort)
 const store=kernel.getConfigStore();
 kernel.setTriggerFunction('pre', async (ik) => {
-  ik.addModule(new AuthModule(ik));
+  ik.addModule(new AuthModule(ik,(module)=>new SQLCon(module,"0")));
 });
 let adminBearer = '';
 
@@ -44,9 +44,8 @@ describe('Prepare env', () => {
 
   test('db', async () => {
     const db = (await kernel.getChildModule('auth')?.getDb()) as AuthDb;
-    const USW=db.getEntityWrapper<AuthUser>("AuthUser");
 
-    const user = await USW?.findObj({
+    const user = await db.authUser.findObj({
       user_name:"admin"
     })
     expect(user?.user_name).not.toBeNull();
@@ -57,14 +56,14 @@ describe('Prepare env', () => {
   test('group permission', async () => {
     const mod = kernel.getChildModule('auth') as AuthModule;
     expect(mod).not.toBeNull();
-    const db = mod?.getDb();
+    const db = mod.getDb();
     expect(db).not.toBeNull();
-    const perm = await db?.getGroupPermissions(1);
+    const groups = await db.groups.getObjList()
+    const user = await db.authUser.getObjList()
+    const perm = await db.getGroupPermissions(groups[0].e_id);
     expect(perm).toHaveLength(2);
-    expect(await db?.getUserPermissionsById(1)).not.toBeNull();
-    expect(await db?.getUserPermissionsById(1)).toHaveLength(2);
-    expect(await db?.getUserPermissionsByName('admin')).not.toBeNull();
-    expect(await db?.getUserPermissionsByName('admin')).toHaveLength(2);
+    expect(await db.getUserPermissionsById(user[0].e_id)).not.toBeNull();
+    expect(await db.getUserPermissionsById(user[0].e_id)).toHaveLength(2);
   });
 
   test('token api', async () => {

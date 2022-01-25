@@ -2,7 +2,6 @@ import { BaseAuthProvider, IBaseKernelModule } from '@grandlinex/kernel';
 import { JwtToken } from '@grandlinex/kernel/dist/classes/BaseAuthProvider';
 import { Request } from 'express';
 import { AuthDb } from '../database';
-import AuthUser from '../database/entity/AuthUser';
 
 export default class AuthProvider extends BaseAuthProvider {
   module: IBaseKernelModule<AuthDb, null, null, null>;
@@ -17,11 +16,10 @@ export default class AuthProvider extends BaseAuthProvider {
     token: string,
     requestType: string
   ): Promise<boolean> {
-    const adb = this.module.getDb() as AuthDb;
+    const adb = this.module.getDb();
     const cc = this.module.getKernel().getCryptoClient();
-    const AUW = adb.getEntityWrapper<AuthUser>('AuthUser');
 
-    const user = await AUW?.findObj({
+    const user = await adb.authUser.findObj({
       user_name: username,
     });
     if (!user) {
@@ -65,12 +63,20 @@ export default class AuthProvider extends BaseAuthProvider {
   }
 
   async isAllowed(username: string, permission: string) {
-    const db = this.module.getDb() as AuthDb;
-    const perm = await db.getUserPermissionsByName(username);
+    const db = this.module.getDb();
+    const user = await db.getUserByName(username);
+    if (!user) {
+      return false;
+    }
 
-    return (
-      perm.find(({ permission_name }) => permission_name === permission) !==
-      undefined
+    const perm = await db.getUserPermissionsById(user.e_id);
+
+    const res = !!perm.find(
+      ({ permission_name }) => permission_name === permission
     );
+    if (!res) {
+      this.module.warn(`Unathorized access for ${username}`);
+    }
+    return res;
   }
 }

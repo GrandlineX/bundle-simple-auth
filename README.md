@@ -27,7 +27,7 @@
 ```
 2. Load module 
 ```typescript
-import Kernel from '@grandlinex/kernel';
+import Kernel,{PGCon,SQLCon} from '@grandlinex/kernel';
 import SimpleAuth from '@grandlinex/bundle-simple-auth';
 
 
@@ -37,8 +37,12 @@ export default class ExampleKernel extends Kernel {
       appName: 'App',
       appCode: 'app'
     });
-    
-    this.addModule(new SimpleAuth(this));
+    // Variant with InMemDb [non persistent - only for dev]
+    this.addModule(new SimpleAuth(ik));
+    // Variant with Postgessql
+    this.addModule(new SimpleAuth(ik,(module)=>new PGCon(module,"0")));
+    // Variant with SQLight
+    this.addModule(new SimpleAuth(ik,(module)=>new SQLCon(module,"0")));
   }
 }
 ```

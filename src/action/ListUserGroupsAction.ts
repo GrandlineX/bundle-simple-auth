@@ -57,14 +57,17 @@ export default class ListUserGroupsAction extends BaseApiAction {
     if (data) {
       const allowed = await cc.permissonValidation(data, 'api');
       if (allowed) {
-        const mdb = this.getModule().getDb() as AuthDb;
-        const list = await mdb.getUserGroups(data.username);
+        const db = this.getModule().getDb() as AuthDb;
+        const user = await db.getUserByName(data.username);
+        if (user) {
+          const list = await db.getUserGroups(user.e_id);
 
-        res
-          .status(200)
-          .header([['Content-Type', 'application/json']])
-          .send(list);
-        return;
+          res
+            .status(200)
+            .header([['Content-Type', 'application/json']])
+            .send(list);
+          return;
+        }
       }
     }
     res.status(403).send('no no no ...');
