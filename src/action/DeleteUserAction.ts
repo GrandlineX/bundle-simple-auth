@@ -73,7 +73,9 @@ export default class DeleteUserAction extends BaseApiAction {
         }
 
         const groupAccess = await mdb.userMap.getObjList({
-          user_id: authUser.e_id,
+          search: {
+            user_id: authUser.e_id,
+          },
         });
 
         for (const acc of groupAccess) {

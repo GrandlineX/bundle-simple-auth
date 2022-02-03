@@ -94,7 +94,7 @@ export default class AuthDb extends CoreDBPrefab<CoreDBCon<any, any>> {
   }
 
   async getGroupPermissions(id: number): Promise<Permission[]> {
-    const maps = await this.groupMap.getObjList({ group_id: id });
+    const maps = await this.groupMap.getObjList({ search: { group_id: id } });
     const wl: WorkLoad<Permission | null> = [];
     for (const map of maps) {
       wl.push(this.permission.getObjById(map.permission));
@@ -116,7 +116,9 @@ export default class AuthDb extends CoreDBPrefab<CoreDBCon<any, any>> {
   async getUserGroups(userId: number): Promise<Groups[]> {
     const out: Groups[] = [];
 
-    const userMap = await this.userMap.getObjList({ user_id: userId });
+    const userMap = await this.userMap.getObjList({
+      search: { user_id: userId },
+    });
     for (const map of userMap) {
       const group = await this.groups.getObjById(map.group_id);
       if (group) {
