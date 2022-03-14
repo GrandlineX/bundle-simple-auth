@@ -1,6 +1,6 @@
 {
   "name": "@grandlinex/bundle-simple-auth",
-  "version": "0.21.0",
+  "version": "0.22.0",
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -17,15 +17,14 @@
     "framework",
     "bundle",
     "grandlinex",
-    "postgresql",
-    "pg"
+    "JWT"
   ],
   "author": {
     "name": "Elschnagoo"
   },
   "license": "BSD-3-Clause",
   "dependencies": {
-    "@grandlinex/kernel": "^0.21.0",
+    "@grandlinex/kernel": "^0.22.0",
     "axios": "^0.24.0",
     "express": "^4.17.1"
   },

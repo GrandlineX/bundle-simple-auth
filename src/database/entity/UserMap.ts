@@ -6,26 +6,26 @@ import { Column, CoreEntity, Entity, EProperties } from '@grandlinex/kernel';
 @Entity('UserMap')
 export default class UserMap extends CoreEntity {
   @Column({
-    dataType: 'int',
+    dataType: 'string',
     foreignKey: {
       key: 'e_id',
       relation: 'auth_user',
     },
   })
-  user_id: number;
+  user_id: string;
 
   @Column({
-    dataType: 'int',
+    dataType: 'string',
     foreignKey: {
       key: 'e_id',
       relation: 'groups',
     },
   })
-  group_id: number;
+  group_id: string;
 
   constructor(prop?: EProperties<UserMap>) {
     super();
-    this.user_id = prop?.user_id || -1;
-    this.group_id = prop?.group_id || -1;
+    this.user_id = prop?.user_id || '';
+    this.group_id = prop?.group_id || '';
   }
 }

@@ -65,7 +65,7 @@ export default class CreateUserAction extends BaseApiAction {
       return;
     }
     if (data) {
-      const allowed = await cc.permissonValidation(data, 'admin');
+      const allowed = await cc.permissionValidation(data, 'admin');
       if (allowed) {
         const mdb = this.getModule().getDb() as AuthDb;
         const seed = generateSeed();

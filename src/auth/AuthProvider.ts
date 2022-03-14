@@ -33,7 +33,7 @@ export default class AuthProvider extends BaseAuthProvider {
     return this.isAllowed(username, 'api');
   }
 
-  async validateAcces(token: JwtToken, requestType: string): Promise<boolean> {
+  async validateAccess(token: JwtToken, requestType: string): Promise<boolean> {
     return this.isAllowed(token.username, requestType);
   }
 

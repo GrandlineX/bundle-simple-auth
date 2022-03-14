@@ -1,5 +1,5 @@
 import * as Path from 'path';
-import Kernel, {createFolderIfNotExist, ICClient, sleep, SQLCon} from '@grandlinex/kernel';
+import Kernel, {createFolderIfNotExist, ICClient, sleep} from '@grandlinex/kernel';
 import AuthModule from '../src/AuthModule';
 import { AuthDb } from '../src';
 import axios from "axios";
@@ -18,9 +18,9 @@ createFolderIfNotExist(testPath);
 const kernel = new Kernel( {appName, appCode,pathOverride: testPath,envFilePath:root});
 kernel.setAppServerPort( apiPort)
 const store=kernel.getConfigStore();
-kernel.setTriggerFunction('pre', async (ik) => {
-  ik.addModule(new AuthModule(ik,(module)=>new SQLCon(module,"0")));
-});
+
+kernel.addModule(new AuthModule(kernel));
+
 let adminBearer = '';
 
 const user={
@@ -165,7 +165,7 @@ describe.each([
       if (!res){
         return
       }
-      const validation = await cc.permissonValidation(res,access)
+      const validation = await cc.permissionValidation(res,access)
 
       expect(validation).toBe(valid)
     }

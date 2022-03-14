@@ -60,7 +60,7 @@ export default class DeleteUserAction extends BaseApiAction {
       return;
     }
     if (data) {
-      const allowed = await cc.permissonValidation(data, 'admin');
+      const allowed = await cc.permissionValidation(data, 'admin');
       if (allowed && userName !== 'admin') {
         const mdb = this.getModule().getDb() as AuthDb;
 

@@ -55,7 +55,7 @@ export default class ListUserGroupsAction extends BaseApiAction {
     const cc = this.getKernel().getCryptoClient() as CryptoClient;
 
     if (data) {
-      const allowed = await cc.permissonValidation(data, 'api');
+      const allowed = await cc.permissionValidation(data, 'api');
       if (allowed) {
         const db = this.getModule().getDb() as AuthDb;
         const user = await db.getUserByName(data.username);
