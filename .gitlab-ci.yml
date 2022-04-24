@@ -11,3 +11,7 @@ include:
     file: '/sonar/core-sonar.yml'
   - project: 'grandlinex/templates'
     file: '/deploy/npm-deploy.yml'
+  - project: 'grandlinex/templates'
+    file: '/deploy/npm-gitlab-deploy.yml'
+  - project: 'grandlinex/templates'
+    file: '/test/sast.yml'
